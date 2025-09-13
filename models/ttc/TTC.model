@@ -1,0 +1,128 @@
+hybrid reachability
+{
+ state var x1, x2, x1_hat, x2_hat, dt, length, missct, updtct, cm
+
+ par
+ {
+  Kmax = 6  mmax = 3  cmmax = 3  h = 1
+ }
+
+ setting
+ {
+  fixed steps 0.01
+  time 10
+  remainder estimation 1e-3
+  identity precondition
+  gnuplot octagon x1 , x2
+  adaptive orders { min 4 , max 8 }
+  cutoff 1e-8
+  precision 53
+  output ttc_controller
+  max jumps 20
+  print on
+ }
+
+ modes
+ {
+  l1
+  {
+   poly ode 1
+   {
+    x1' = 1.0*x1 + 0.1*x2 - (0.0050*(16.0302*x1_hat + 5.6622*x2_hat))
+    x2' = 1.0*x2 - (0.1000*(16.0302*x1_hat + 5.6622*x2_hat))
+    x1_hat' = 0
+    x2_hat' = 0
+    dt' = 1
+    length' = 0
+    missct' = 0
+    updtct' = 0
+    cm' = 0
+   }
+   inv
+   {
+    length <= Kmax
+    missct <= mmax
+    cm <= cmmax
+    x1 <= 26  x1 >= -26
+    x2 <= 31  x2 >= -31
+   }
+  }
+
+  l2
+  {
+   poly ode 1
+   {
+    x1' = 1.0*x1 + 0.1*x2 - (0.0050*(16.0302*x1_hat + 5.6622*x2_hat))
+    x2' = 1.0*x2 - (0.1000*(16.0302*x1_hat + 5.6622*x2_hat))
+    x1_hat' = 0
+    x2_hat' = 0
+    dt' = 1
+    length' = 0
+    missct' = 0
+    updtct' = 0
+    cm' = 0
+   }
+   inv
+   {
+    length <= Kmax
+    missct <= mmax
+    cm <= cmmax
+    x1 <= 26  x1 >= -26
+    x2 <= 31  x2 >= -31
+   }
+  }
+ }
+
+ jumps
+ {
+  l1 -> l2
+  guard { length + 2 <= Kmax  missct + 1 <= mmax  cm + 1 <= cmmax }
+  reset {
+    x1_hat' := (1 - 0.0050*16.0302 - 0.9902*1)*x1_hat
+               + (0.1 - 0.0050*5.6622 - 0.9902*1)*x2_hat
+               + 0.9902*(x1 + x2)
+    x2_hat' := (0 - 0.1000*16.0302 - 0.9892*1)*x1_hat
+               + (1 - 0.1000*5.6622 - 0.9892*1)*x2_hat
+               + 0.9892*(x1 + x2)
+    length' := length + 2
+    missct' := missct + 1
+    updtct' := (length + 2) - (missct + 1)
+    cm' := cm + 1
+    dt' := 0
+  }
+  interval aggregation
+
+  l2 -> l1
+  guard { length + 1 <= Kmax  missct <= mmax  cm <= cmmax }
+  reset {
+    x1_hat' := (1 - 0.0050*16.0302 - 0.9902*1)*x1_hat
+               + (0.1 - 0.0050*5.6622 - 0.9902*1)*x2_hat
+               + 0.9902*(x1 + x2)
+    x2_hat' := (0 - 0.1000*16.0302 - 0.9892*1)*x1_hat
+               + (1 - 0.1000*5.6622 - 0.9892*1)*x2_hat
+               + 0.9892*(x1 + x2)
+    length' := length + 1
+    missct' := missct
+    updtct' := (length + 1) - missct
+    cm' := 0
+    dt' := 0
+  }
+  interval aggregation
+ }
+
+ init
+ {
+  l1
+  {
+   x1 in [0.9,1.1]
+   x2 in [-0.1,0.1]
+   x1_hat in [0.9,1.1]
+   x2_hat in [-0.1,0.1]
+   dt in [0,0]
+   length in [0,0]
+   missct in [0,0]
+   updtct in [0,0]
+   cm in [0,0]
+  }
+ }
+}
