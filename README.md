@@ -1,1 +1,0 @@
-# safe_weaklyHard_synth
