@@ -469,7 +469,7 @@ for i=1:size(Pm_di,2)
 %     if howStabler(i)>1
 %         mum_di{i}= howStabler(i)*0.9; %sdpvar(1,1);
 %     else
-        mum_di{i} =1+200*slack;
+        mum_di{i} =1+2000*slack;
 %     end
     for j=1:size(Pm_di,2)
         if clfsolved(i) == 1  || mlfonly == 1
