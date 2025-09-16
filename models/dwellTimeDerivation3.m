@@ -7,7 +7,7 @@ ops1 = sdpsettings('verbose',1);
 % cruise_control, dcmotor_pos, trajectory, fuel_injection,
 % }
 system = "suspension_control"
-mlfonly = 1;
+mlfonly = 0;
 %% Given l,epsolon,sampling period
 exec_pattern='1';
 exec_pattern1= strrep(exec_pattern, '1','.1');
@@ -469,7 +469,7 @@ for i=1:size(Pm_di,2)
 %     if howStabler(i)>1
 %         mum_di{i}= howStabler(i)*0.9; %sdpvar(1,1);
 %     else
-        mum_di{i} =1+2000*slack;
+        mum_di{i} =1+200*slack;
 %     end
     for j=1:size(Pm_di,2)
         if clfsolved(i) == 1  || mlfonly == 1
