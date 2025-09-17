@@ -286,14 +286,14 @@ hybrid reachability
  {
   l0
   {
-   x1 in [-1,1]
-   x2 in [-100,100]
-   x3 in [-50,50]
-   x4 in [-300,300]
-   x1_hat in [-1,1]
-   x2_hat in [-100,100]
-   x3_hat in [-50,50]
-   x4_hat in [-300,300]
+   x1 in [-1,-0.99]
+   x2 in [-50,-49.95]
+   x3 in [-20,15.95]
+   x4 in [-100,-99.95]
+   x1_hat in [-1,-0.99]
+   x2_hat in [-50,-49.950]
+   x3_hat in [-20,15.95]
+   x4_hat in [-100,-99.95]
    dt in [0,0]
    gt in [0,0]
    length in [0,0]
