@@ -640,3 +640,14 @@ exp_decay_dt
 exp_decay
 DwellingRatio
 %rate
+%% storing
+a = open_loop.a, b= open_loop.b, c= open_loop.c, d = open_loop.d;
+ad = open_loop_dt.a, bd = open_loop_dt.b, h = open_loop_dt.Ts;
+mdadt1 = Self_Loop_Count(1), k = K, l = L;
+if exist('safex')
+    save(system+'.mat', 'a', 'b', 'c', 'd', 'mdadt1', 'ad', 'bd', ...
+        'h', 'safex', 'k', 'l');
+else
+    save(system+'.mat', 'a', 'b', 'c', 'd', 'mdadt1', 'ad', 'bd', ...
+        'h', 'k', 'l');
+end
