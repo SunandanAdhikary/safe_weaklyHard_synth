@@ -36,7 +36,7 @@ def verify_model(modelfilepaths):
         modelfilename = os.path.basename(modelfilepath).split('.')[0]
         # modelfilename = modelfilepath.split('//')[-1].split('.')[0]
         # modelfilename = modelfilename.split('.')[0]
-        logfilename = f'{modelfilename}+.log'
+        logfilename = f'{modelfilename}'+'.log'
         print(f"Verifying {modelfilename}.model-->{logfilename}")
         cmdlist = ['wsl', 'bash', '-c', f'../../flowstar-2.1.0/flowstar < {modelfilename}.model 2>&1 | tee {modelfilename}.log']
         if platform.system() != "Windows":

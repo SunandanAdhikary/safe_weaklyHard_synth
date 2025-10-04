@@ -16,7 +16,17 @@ A novel synthesis framework is proposed for synthesising such safe weakly hard s
     4. verify them sequentially using [verify_model.py](/verify_model.py) and parallelly using [verify_model_parallel.py](/verify_model_parallel.py)
     5. check the output logs using [check_log.py](/utils/check_log.py)
     6. store safe partitions for a maximum miss count ```m_j``` and consecutive miss count ```cm_bar_j``` (based on sscd) in a 2d array ```sg_loc``` and limit ```cm``` for the current ```m_j```
-    7. repeat 3,4,5,6 for HA models for ```K_max``` and ```m_j``` (model file generation uses [generate_model.py](/generate_model.py))
+    7. after finding location wise safe partitions, repeat steps 3,4,5,6 for HA models respecting ```cm_bar_j``` and for ```K_max```, ```m_j``` and for those safe partiutions (model file generation uses [generate_model.py](/generate_model.py))
+    8. The process 3-7 is repeated for inductive safety
+
+#### todos (_remove/tick when fixed_):
+- check if the whole state space is coverered while partitioning
+- check if  sg lists ans spec lists are updated correctly
+- check if HA model files are generated correctly by omitting unsafe regions and sscds
+- fix the error in the code to view the rolling log from flowstar run
+    > C:\Users\sunan\AppData\Local\Programs\Python\Python311\Lib\subprocess.py:1016: RuntimeWarning: line buffering (buffering=1) isn't supported in binary mode, the default buffer size will be used 
+    > self.stdout = io.open(c2pread, 'rb', bufsize)
+- check if other modelfile parameters can be fetched from config file 
 
 
 
