@@ -67,7 +67,7 @@ if __name__ == "__main__":
     print("Y:", intervals3[1])
 
     # plot intervals as rectangles on a 2D plot
-    plt.Figure(figsize=(10, 8))
+    plt.figure(figsize=(10, 8))
     # Plot each polytope's intervals along with the polytopes
 
     plt.fill([intervals1[0][0], intervals1[0][1], intervals1[0][1], intervals1[0][0]], 
@@ -78,4 +78,10 @@ if __name__ == "__main__":
             color='green', alpha=0.3, label='Polytope 2 Intervals')
     plt.fill([intervals3[0][0], intervals3[0][1], intervals3[0][1], intervals3[0][0]],
             [intervals3[1][0], intervals3[1][0], intervals3[1][1], intervals3[1][1]],
-            color='red', alpha=0.3, label='Polytope 3 Intervals')
+                    color='red', alpha=0.3, label='Polytope 3 Intervals')
+        
+    plt.legend()
+    plt.xlabel("X")
+    plt.ylabel("Y")
+    plt.title("Polytope Intervals Visualization")
+    plt.show()

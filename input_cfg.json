@@ -1,0 +1,16 @@
+{
+    "system": "suspension_control",
+    "hypereriod": 8,
+    "fixed_step": 0.00001,
+    "rem": 1e-3,
+    "cutoff": 1e-8,
+    "prec": 53,
+    "max_order": 5,
+    "min_order": 3,
+    "run_multicore": 0,
+    "_comment1": "run_multicore is set to 1 to run all verifications in parallel using GNU parallel",
+    "which_safety": 2,
+    "_comment2": "which_safety is set to 1 for location/sscd wise safety analysis, set to 2 for overall HA safety analysis set to e for both (sscd wise then HA), and  set to 0 for no safety analysis, only model generation",
+    "system_dir": "",
+    "_comment3": "where to make a folder with system's name and store the relevant model, log, counterexample, plot etc. files. current directory/models/ is default"
+}

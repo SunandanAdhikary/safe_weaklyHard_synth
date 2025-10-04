@@ -1,25 +1,20 @@
 import numpy as np
 import os
 
-def generate_model(A, B, C, Ad, Bd, K, L, h, safex, x0_bounds, filename, mdadt1=4, locn=4, Kmax=20, mmax=10):
+def generate_model(A, B, C, Ad, Bd, K, L, h, safex, x0_bounds, filename, locations, mdadt1, Kmax, mmax,
+                   fixed_step=0.00005, rem=1e-3, cutoff=1e-8, prec=53, orders=[3, 5]):
     """
-    Generate Flow* .model file for suspension system with arbitrary locations.
-
+    Generate Flow* .model file for CDUS with desired system properties.
     """
-    
-    fixed_step = 0.00005
-    rem = 1e-3  # remainder estimation
-    cutoff = 1e-8  # cutoff for polynomial terms
-    prec = 53  # precision
-    orders = [3, 5]  # fixed orders for Taylor model
+    # fixed_step = 0.00005
+    # rem = 1e-3  # remainder estimation
+    # cutoff = 1e-8  # cutoff for polynomial terms
+    # prec = 53  # precision
+    # orders = [3, 5]  # fixed orders for Taylor model
     n = A.shape[0]  # number of states
     p = K.shape[0]  # number of inputs
     m = C.shape[0]  # number of outputs
     # ----------------define locations and their properties: length, miss count, sampling period---------------- ##
-    if not isinstance(locn, int):
-        locations = locn
-    else:
-        locations = [10**j for j in range(locn)]  # e.g. locn=4 -> [1, 10, 100, 1000]
     all_locs = ['0'] + [str(loc) for loc in locations] + ['1'*mdadt1] + ['end'] # adding start, end, mdadt locations
     # Calculate length and misscount for each location
     loc_properties = {}
@@ -30,7 +25,7 @@ def generate_model(A, B, C, Ad, Bd, K, L, h, safex, x0_bounds, filename, mdadt1=
                 'missct': 0,
                 'h_var': 'h0',  # no timing parameter
                 'h_val': 0  # timing parameter value
-            }
+            } 
         elif loc == 'end':
             loc_properties[loc] = {
                 'length': Kmax,
@@ -52,7 +47,8 @@ def generate_model(A, B, C, Ad, Bd, K, L, h, safex, x0_bounds, filename, mdadt1=
                 'missct': digits-1,  # number of misses to add
                 'h_var': f"h" if loc == '1' else f"h{loc}",  # timing parameter name
                 'h_val': h if loc == '1' else h*digits  # timing parameter value
-        }
+            }
+            
 
     ## ---------Precompute (A - BK - LC), (Ad - BdK - LC) for dynamics---------- ##
     BK = B @ K.reshape(1,-1)
@@ -64,6 +60,7 @@ def generate_model(A, B, C, Ad, Bd, K, L, h, safex, x0_bounds, filename, mdadt1=
     
     #### -----------Build file-------------- ####
     modelfile = f"{filename}.model"
+
     with open(modelfile, "w") as f:
         f.write("hybrid reachability\n{\n")
         
@@ -133,8 +130,8 @@ def generate_model(A, B, C, Ad, Bd, K, L, h, safex, x0_bounds, filename, mdadt1=
         f.write(f"  cutoff {str(cutoff)}\n")
         f.write(f"  precision {str(prec)}\n")
         f.write(f"  output {os.path.basename(filename)}_op\n")
-        f.write(f"  max jumps {Kmax}\n")
-        f.write("  print on\n")
+        f.write(f"  max jumps {Kmax+2}\n")
+        f.write("  print off\n")
         f.write(" }\n\n")
 
         # ----------------locations---------------- #
@@ -185,7 +182,6 @@ def generate_model(A, B, C, Ad, Bd, K, L, h, safex, x0_bounds, filename, mdadt1=
                 f.write("   }\n  }\n\n")
         
         f.write(" }\n\n")
-        
         # -------------Jumps-------------- #
         f.write(" jumps\n {\n")
         for i_to, loc_to in enumerate(all_locs):
@@ -200,7 +196,7 @@ def generate_model(A, B, C, Ad, Bd, K, L, h, safex, x0_bounds, filename, mdadt1=
                     elif loc_to == 'end':
                         f.write(f"length = {Kmax}   missct = {mmax}   dt = {loc_properties[loc_from]['h_val']}   gt = {Kmax*h}")   # end at l0
                     else:
-                        f.write(f"length + {loc_properties[loc_to]['length']} <= {Kmax-1}   missct + {loc_properties[loc_to]['missct']} <= {mmax}   dt = {loc_properties[loc_from]['h_val']}   gt <= {Kmax*h-h}")
+                        f.write(f"length + {loc_properties[loc_to]['length']} <= {Kmax}   missct + {loc_properties[loc_to]['missct']} <= {mmax}   dt = {loc_properties[loc_from]['h_val']}   gt <= {Kmax*h}")
                         if loc_to == '1'*mdadt1:
                             f.write(f"  mdadt = {mdadt1}")  # jump to l1's madadt variant only if mdadt is not yet maintained
                         if loc_from == '1'*mdadt1:

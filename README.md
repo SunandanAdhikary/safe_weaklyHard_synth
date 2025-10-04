@@ -4,3 +4,13 @@ A novel synthesis framework is proposed for synthesising such safe weakly hard s
 
 <img width="1609" height="820" alt="toolflow" src="https://github.com/user-attachments/assets/bfd9a084-00d1-4e8b-b9cf-ec02d1f5797a" />
 
+## How to run
+- requires flowstar(included at /flowstar-2.1.0, need to make build, runs in linux) 
+- requires python, wsl, pip (install them)
+- run pip install numpy polytope matplotlib 
+- modify [input_cfg.json](/input_cfg.json) at root path
+- run [mK_safety_assn.py](/mK_safety_assn.py)
+
+
+
+

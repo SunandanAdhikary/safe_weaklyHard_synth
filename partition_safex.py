@@ -1,6 +1,7 @@
 import numpy as np
 import itertools
 from polytope import Polytope
+from utils.plot_polytope import print_polytope
 
 def partition_safex(safex, grid_delta, dims):
     """
@@ -38,7 +39,7 @@ def partition_safex(safex, grid_delta, dims):
             a_lower[i] = -1
             A.append(a_lower)
             b.append(-lower)
-            print(f"Creating {str(ii)}-th partition [{lower}, {upper}]")
+            # print(f"Creating {str(ii)}-th partition [{lower}, {upper}]")
         partitions.append(Polytope(np.array(A), np.array(b)))
         # for part in partitions:  
         #     for i in range(dims):
@@ -52,8 +53,7 @@ def partition_safex(safex, grid_delta, dims):
         grid_delta = [0.001, 0.1, 0.05, 0.1] # [1, 100, 50, 600]
         dims = len(safex[0])
         partitions, count = partition_safex(safex, grid_delta, dims)
-        print(f"Partitioned safe space into {str(count)} grid cells using Polytope.")
+        print(f"Partitioned safe space into {str(count)} grid cells using Polytope")
         for part in partitions:  
-            for i in range(dims):
-                print(f'{part.A[2*i][i]}*x{i+1} <= {part.b[2*i]}  {-1*part.A[2*i+1][i]}*x{i+1} >= {-1*part.b[2*i+1]}')
-                print(f'{part.A[2*i][i]}*x{i+1}_hat <= {part.b[2*i]}  {-1*part.A[2*i+1][i]}*x{i+1}_hat >= {-1*part.b[2*i+1]}')
+            print_polytope(part, dims)
+            

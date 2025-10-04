@@ -37,7 +37,7 @@ if __name__ == "__main__":
     # ---------------------Initialize the specification list and SG data structure------------------------ #
     spec_list = [{'X': [], 'm_bar': m, 'cm_bar': cm_bar, 'cm': 0, 'K': Kmax} for m in range(m_bar_max + 1)]
     # store polytope objects in sg[m][locations] = set of reachable partitions and initialise with empty polytopes
-    sg = {m: {len(locations): [] for m in range(m_bar_max + 1)} for m in range(m_bar_max + 1)}  # sg[m][locations] = list of Polytope objects
+    sg = {m: {len(locations): [] for inner_m in range(m_bar_max + 1)} for m in range(m_bar_max + 1)}  # sg[m][locations] = list of Polytope objects
     # # initialise sg with empty sets
     # for m in range(m_bar_max + 1):
     #     sg[m][locations] = set()  # start with 0 misses at each location
@@ -101,6 +101,7 @@ if __name__ == "__main__":
                     print(f"Executing command: {' '.join(cmdlist)}")
                     # result = subprocess.run(cmdlist, capture_output=True, text=True, check=True)
                     result = subprocess.Popen(cmdlist, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE )
+                    result.wait()
                     print(f"Completed verification for {modelfilename}.model")
         
             if run_multicore:
@@ -133,7 +134,7 @@ if __name__ == "__main__":
                 verify_ct = verify_ct - 1
 
     
-    spec_list = [{'X': Polytope.union(sg[0][len(locations)]), 'm_bar': m_j, 'cm_bar': cm_bar, 'cm': 0, 'K': Kmax} for m_j in range(m_bar_max + 1)]
+    spec_list = [{'X': Polytope.union(sg[m_j][len(locations)]), 'm_bar': m_j, 'cm_bar': cm_bar, 'cm': 0, 'K': Kmax} for m_j in range(m_bar_max + 1)]
     print(f"\nFinal specification list:")
     for spec in spec_list:
         print(f"  - {spec}")

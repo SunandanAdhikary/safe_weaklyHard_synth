@@ -18,7 +18,7 @@ def check_log(log_file_path = "d:\workspace\safe_weaklyHard_synth\models\suspens
             print("Result: UNKNOWN")
             result = -1
         else:
-            print("The line does not contain SAFE, UNSAFE, or UNKNOWN. The computation might have been interrupted. Chweck the log file for details.")
+            print("The line does not contain SAFE, UNSAFE, or UNKNOWN. The computation might have been interrupted. Check the log file for details.")
             result = -2
     else:
         print("The file does not have a second non-blank line.")
