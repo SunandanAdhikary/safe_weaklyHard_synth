@@ -82,6 +82,11 @@ def verify_model_parallel(modelfilepaths):
                     print('error in log check')
         else:
             print(f"Verification failed for {modelfilename}.model with return code {ret_code}")
+            print(f"Command Output:\n{result.stdout}")
+            print(f"Command Errors (if any):\n{result.stderr}")
+            is_safe = -2
+            
+        results.append(result)
         is_safe_status.append(is_safe)
 
     return results, is_safe_status

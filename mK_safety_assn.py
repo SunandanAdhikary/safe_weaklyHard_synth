@@ -1,5 +1,7 @@
 import os
 import subprocess
+import numpy as np
+from multiprocessing import Pool
 from polytope import Polytope
 from system_desc import system_desc
 from generate_model import generate_model 
@@ -7,9 +9,8 @@ from partition_safex import partition_safex
 from generate_sscd_model import generate_sscd_model
 from verify_model import verify_model
 from verify_model_parallel import verify_model_parallel
-import numpy as np
-from multiprocessing import Pool
 from utils.config import load_input_cfg
+from utils.plot_polytope import print_polytope
 
 # --------------------- Read input config and set params--------------------- #
 curdir = os.getcwd()
@@ -51,10 +52,10 @@ if __name__ == "__main__":
 
     # ---------------------Initialize the specification list and SG data structure------------------------ #
     spec_list = [{'X': [], 'm_bar': m, 'cm_bar': cm_bar, 'cm': mdadt1, 'K': Kmax} for m in range(m_bar_max + 1)]
-    # store polytope objects in sg[m][location_zeroCt] = set of reachable partitions and initialise with empty polytopes
-    sg_loc = {m: {i: [] for i in range(nl)} for m in range(m_bar_max + 1)} 
-    # store polytope objects in sg[m][location_count] = set of reachable partitions and initialise with empty polytopes
-    sg = {m: {nl: [] for j in range(nl)} for m in range(m_bar_max + 1)} 
+    # store polytope objects in sg_loc[mbar][location_zeroCt] = set of reachable partitions and initialise with empty polytopes
+    sg_loc = {m_bar: {i: [] for i in range(nl)} for m_bar in range(m_bar_max + 1)} 
+    # store polytope objects in sg[mbar] = set of reachable partitions and initialise with empty polytopes
+    sg = {m: [] for m in range(m_bar_max + 1)} 
     
     # tasks = []  # Store all tasks for parallel execution
     # make an nl sized array with -1 to store sscd models
@@ -74,7 +75,7 @@ if __name__ == "__main__":
     partitions, count = partition_safex(safex, grid_delta, dims)
     print(f"----Partitioned safe space into {count} grid cells using Polytope----")
     # -------------------------- Generate all models --------------------------- #
-    for m_j in range(m_bar_max, -1, -1): # from m_bar_max to 0
+    for m_bar_j in range(m_bar_max, -1, -1): # from m_bar_max to 0
         p_ct = 0
         modelfilepaths = []
         loc_safety_models = ['' for i in range(nl)]
@@ -83,25 +84,25 @@ if __name__ == "__main__":
         # safex_new = safex.copy() # copy safex into safex_new such that changing safex_new does not change safex
         while verify_ct : # or (safex_new - safex):
             for partition in partitions:
-                modelfilename = f'{system}_p{p_ct}_K{Kmax}_mbar{m_j}' # +.model or +_{sscd}.model
+                modelfilename = f'{system}_p{p_ct}_K{Kmax}_mbar{m_bar_j}' # +.model or +_{sscd}.model
                 modelfilepath = os.path.join(system_dir, modelfilename)
                 # if user needs verification/reachability analysis
                 if which_safety >= 0:
                     for loc in locations:
                         zct = str(loc).count('0')
-                        loc_modelfilepath = generate_sscd_model(a, b, c, ad, bd, k, l, h, safex, partition, modelfilepath, mdadt1, zct, Kmax, m_j, fixed_step=fixed_step, rem=rem, cutoff=cutoff, prec=prec, orders=orders)
+                        loc_modelfilepath = generate_sscd_model(a, b, c, ad, bd, k, l, h, safex, partition, modelfilepath, mdadt1, zct, Kmax, m_bar_j, fixed_step=fixed_step, rem=rem, cutoff=cutoff, prec=prec, orders=orders)
                         loc_safety_models[zct] = loc_modelfilepath
-                        # ------------------------------ SSCD Verification ---------------------------- #
+                    # ------------------------------ SSCD Verification ---------------------------- #
                         if not run_multicore and which_safety == 1 or which_safety == 3:
                             print(f"\n--- Verifying HA model for {p_ct}-th partition, {loc} sscd ---")
                             loc_results, loc_is_safe_status =  verify_model([loc_modelfilepath])
                             if loc_is_safe_status[0] == 1:
-                                sg_loc[m_j][zct].append(partition)  # add Polytope object to list
-                                print(f"Model {loc_modelfilepath} is SAFE, adding partition to sg_loc[{m_j}][{zct}]")
+                                sg_loc[m_bar_j][zct].append(partition)  # add Polytope object to list
+                                print(f"Model {loc_modelfilepath} is SAFE, adding partition to sg_loc[{m_bar_j}][{zct}]")
                                 if loc != 1:
                                     cm_bar_j = cm_bar_j + 1
                             else:
-                                print(f"Model {loc_modelfilepath} is UNSAFE, not adding partition to sg_loc[{m_j}][{zct}]" if loc_is_safe_status[0] == 0 else f"Model {loc_modelfilepath} verification INCOMPLETE, try changing config params, not adding partition to sg[{m_j}][{zct}]" if loc_is_safe_status[0] == -1 else "logging error, retry")
+                                print(f"Model {loc_modelfilepath} is UNSAFE, not adding partition to sg_loc[{m_bar_j}][{zct}]" if loc_is_safe_status[0] == 0 else f"Model {loc_modelfilepath} verification INCOMPLETE, try changing config params, not adding partition to sg[{m_bar_j}][{zct}]" if loc_is_safe_status[0] == -1 else "logging error, retry")
                                 # limit number of consecutive misses
                                 locations = locations[:locations.index(loc)]
                                 break
@@ -111,39 +112,39 @@ if __name__ == "__main__":
                             zct = str(loc).count('0')
                             loc_modelfilepath = loc_safety_models[zct]
                             if loc_is_safe_status[0] == 1:
-                                sg_loc[m_j][zct].append(partition)  # add Polytope object to list
-                                print(f"Model {loc_modelfilepath} is SAFE, adding partition to sg_loc[{m_j}][{zct}]")
+                                sg_loc[m_bar_j][zct].append(partition)  # add Polytope object to list
+                                print(f"Model {loc_modelfilepath} is SAFE, adding partition to sg_loc[{m_bar_j}][{zct}]")
                                 if loc != 1:
                                     cm_bar_j = cm_bar_j + 1
                             else:
-                                print(f"Model {loc_modelfilepath} is UNSAFE, not adding partition to sg_loc[{m_j}][{zct}]" if loc_is_safe_status[0] == 0 else f"Model {loc_modelfilepath} verification INCOMPLETE, try changing config params, not adding partition to sg[{m_j}][{zct}]" if loc_is_safe_status[0] == -1 else "logging error, retry")
+                                print(f"Model {loc_modelfilepath} is UNSAFE, not adding partition to sg_loc[{m_bar_j}][{zct}]" if loc_is_safe_status[0] == 0 else f"Model {loc_modelfilepath} verification INCOMPLETE, try changing config params, not adding partition to sg[{m_bar_j}][{zct}]" if loc_is_safe_status[0] == -1 else "logging error, retry")
                                 # limit number of consecutive misses
                                 locations = locations[:locations.index(loc)]
                                 break
                 # if which_safety >= 0:
-                    if (which_safety == 3 and partition in sg_loc[m_j]) or which_safety == 2:
-                        print(f"\n--- Generating HA model for partition {p_ct} and m_bar = {m_j} misses and sscds = {locations} ---")
+                    if (which_safety == 3 and partition in sg_loc[m_bar_j]) or which_safety == 2:
+                        print(f"\n--- Generating HA model for partition {p_ct} and m_bar = {m_bar_j} misses and sscds = {locations} ---")
                         # if m_j > nl, only consider locations with miss count <= m_j
-                        if cm_bar_j < m_j:
+                        if cm_bar_j < m_bar_j:
                         # if nl-1 < m_j:
                             # loc_safety_models.append(generate_model(a, b, c, ad, bd, k, l, h, safex, partition, modelfile, locations, mdadt1=4, Kmax=Kmax, mmax=m_j))
-                            modelfile = generate_model(a, b, c, ad, bd, k, l, h, safex, partition, modelfilepath, locations, mdadt1, Kmax, m_j, fixed_step=fixed_step, rem=rem, cutoff=cutoff, prec=prec, orders=orders)
+                            modelfile = generate_model(a, b, c, ad, bd, k, l, h, safex, partition, modelfilepath, locations, mdadt1, Kmax, m_bar_j, fixed_step=fixed_step, rem=rem, cutoff=cutoff, prec=prec, orders=orders)
                             modelfilepaths.append(modelfile)
                         else:
-                            locations1 = [loc for loc in locations if m_j >= loc.count('0')]
+                            locations1 = [loc for loc in locations if m_bar_j >= loc.count('0')]
                             # loc_safety_models.append(generate_model(a, b, c, ad, bd, k, l, h, safex, partition, modelfile, locations1, mdadt1=4, Kmax=Kmax, mmax=m_j))
-                            modelfile = generate_model(a, b, c, ad, bd, k, l, h, safex, partition, modelfilepath, locations1, mdadt1, Kmax, m_j, fixed_step=fixed_step, rem=rem, cutoff=cutoff, prec=prec, orders=orders)
+                            modelfile = generate_model(a, b, c, ad, bd, k, l, h, safex, partition, modelfilepath, locations1, mdadt1, Kmax, m_bar_j, fixed_step=fixed_step, rem=rem, cutoff=cutoff, prec=prec, orders=orders)
                             modelfilepaths.append(modelfile)
                         # tasks.append((wsl_path, modelfilename))
-                        # -------------------------- HA Model Verification -------------------------- #
+            # -------------------------- HA Model Verification -------------------------- #
                         if not run_multicore and which_safety >= 2:
                             print(f"\n--- Verifying HA model for {p_ct}-th partition ---")
                             results, is_safe_status =  verify_model([modelfile])
                             if is_safe_status[0] == 1:
-                                sg[m_j][nl].append(partition)  # add Polytope object to list
-                                print(f"{modelfile} is SAFE, adding partition to sg[{m_j}][{nl}]")
+                                sg[m_bar_j].append(partition)  # add Polytope object to list
+                                print(f"{modelfile} is SAFE, adding partition to sg[{m_bar_j}]")
                             else:
-                                print(f"{modelfile} is UNSAFE, not adding partition to sg[{m_j}][{nl}]" if is_safe_status[0] == 0 else f"{modelfile} verification INCOMPLETE, try changing config params, not adding partition to sg[{m_j}][{nl}]" if is_safe_status[0] == -1 else "logging error, retry")
+                                print(f"{modelfile} is UNSAFE, not adding partition to sg[{m_bar_j}]" if is_safe_status[0] == 0 else f"{modelfile} verification INCOMPLETE, try changing config params, not adding partition to sg[{m_bar_j}]" if is_safe_status[0] == -1 else "logging error, retry")
                 p_ct = p_ct + 1
             if run_multicore:
                 results, is_safe_status =  verify_model_parallel(modelfilepaths)
@@ -151,18 +152,18 @@ if __name__ == "__main__":
                     # idx = modelfilenames.index(modelfilename)
                     # modelfilename = safety_models[idx]
                     if is_safe_status[0] == 1:
-                        sg_loc[m_j][cm_bar_j].append(partition)  # add Polytope object to list
-                        print(f"Model {modelfile} is SAFE, adding partition to sg_loc[{m_j}][{cm_bar_j}]")
+                        sg[m_bar_j].append(partition)  # add Polytope object to list
+                        print(f"Model {modelfile} is SAFE, adding partition to sg[{m_bar_j}]")
                     else:
-                        print(f"Model {modelfile} is UNSAFE, not adding partition to sg_loc[{m_j}][{cm_bar_j}]" if is_safe_status[0] == 0 else f"Model {modelfile} verification INCOMPLETE, try changing config params, not adding partition to sg[{m_j}][{cm_bar_j}]" if is_safe_status[0] == -1 else "logging error, retry")
+                        print(f"Model {modelfile} is UNSAFE, not adding partition to sg[{m_bar_j}]" if is_safe_status[0] == 0 else f"Model {modelfile} verification INCOMPLETE, try changing config params, not adding partition to sg[{m_bar_j}]" if is_safe_status[0] == -1 else "logging error, retry")
 
             # update partitions for second time reachability analysis
-            partitions = list(sg[m_j][cm_bar_j]) # update partitions to only those that are safe
-            print(f"------Updated safe partitions for m_bar={m_j}: {len(partitions)} with {sg[m_j][cm_bar_j]}------")
+            partitions = list(sg[m_bar_j]) # update partitions to only those that are safe
+            print(f"------Updated safe partitions for m_bar={m_bar_j}: {len(partitions)} with {sg[m_bar_j][cm_bar_j]}------")
             verify_ct = verify_ct - 1
 
         # update spec list for this miss count
-        spec_list.append({'X': sg[m_j][cm_bar_j], 'm_bar': m_j, 'cm_bar': cm_bar_j, 'cm': 0, 'K': Kmax})
+        spec_list.append({'X': sg[m_bar_j], 'm_bar': m_bar_j, 'cm_bar': cm_bar_j, 'cm': {mdadt1}, 'K': Kmax})
 
 
     # spec_list = [{'X': sg[0][nl], 'm_bar': m_j, 'cm_bar': cm_bar, 'cm': 0, 'K': Kmax} for m_j in range(m_bar_max + 1)]
@@ -170,6 +171,7 @@ if __name__ == "__main__":
     print(f"-----------Final specification list---------------\n")
     for spec in spec_list:
         if spec.X != []:
-            print(f"spec for {spec.m_bar}  - {spec}")
+            print(f"spec for miss count = {spec['m_bar']} cm_bar = {spec['cm_bar']} safe reg: ")
+            print_polytope(spec['X'])
         else:
-            print(f"no spec for {spec.m_bar}")
+            print(f"no spec for miss count = {spec['m_bar']}")
