@@ -41,4 +41,5 @@ def run_flowstar(wsl_path, modelfilename):
     except Exception as e:
         print(f"Error executing flowstar for {modelfilename}")
         print(f"Exception: {str(e)}")
+
         return False
