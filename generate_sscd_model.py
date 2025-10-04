@@ -113,7 +113,7 @@ def generate_sscd_model(A, B, C, Ad, Bd, K, L, h, safex, x0_bounds, filename, md
         # create timing parameters for each location
         timing_params = []
         for loc in all_locs:
-            if loc > '0' and loc != 'end':  # skip l0, lend
+            if loc > '0' and loc != 'end' and loc != '1'*mdadt1:  # skip l0, lend
                 timing_params.append(f"{loc_properties[loc]['h_var']} = {loc_properties[loc]['h_val']}")
         f.write("  " + "  ".join(timing_params) + "\n")
         f.write(" }\n\n")
